@@ -1,107 +1,139 @@
-include("Persona.js");
-include("GestorPersonas.js");
-include("Proyecto.js");
-include("Departamento.js");
+// Inicializar el gestor de personas
+const gestorPersonas = new GestorPersonas();
 
+// Elementos del DOM
+const personasList = document.getElementById('personas-list');
+const personaForm = document.getElementById('persona-form');
+const personaSelect = document.getElementById('persona-select');
+const editPersonaForm = document.getElementById('edit-persona-form');
+const tabs = document.querySelectorAll('.tab');
+const tabContents = document.querySelectorAll('.tab-content');
 
-// Inicialización de clases
-// Crear un gestor de personas global
-const gestor = new GestorPersonas();
+// Función para cambiar entre pestañas
+function setupTabs() {
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            
+            // Activar la pestaña seleccionada
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Mostrar el contenido de la pestaña seleccionada
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                }
+            });
 
-// Crear algunas personas de ejemplo
-const persona1 = new Persona("P001", "Juan", "Pérez", new Date(1990, 5, 15), "Masculino", "Desarrollador");
-const persona2 = new Persona("P002", "María", "González", new Date(1985, 10, 22), "Femenino", "Diseñadora");
-const persona3 = new Persona("P003", "Carlos", "Rodríguez", new Date(1992, 2, 8), "Masculino", "Desarrollador");
-
-// Agregar las personas al gestor
-gestor.agregarPersona(persona1);
-gestor.agregarPersona(persona2);
-gestor.agregarPersona(persona3);
-
-// Crear un departamento y asignar personas
-const departamento = new Departamento("D001", "Desarrollo");
-departamento.agregarMiembro(persona1);
-departamento.agregarMiembro(persona3);
-
-// Crear un proyecto y asignar participantes con roles
-const proyecto = new Proyecto("PR001", "Sistema de Gestión", new Date(2025, 0, 1));
-proyecto.agregarParticipante(persona1, "Programador");
-proyecto.agregarParticipante(persona2, "Diseñador UX");
-proyecto.agregarParticipante(persona3, "Tester");
-
-// Función para formatear fecha para mostrar en la tabla
-function formatDate(date) {
-    return date.toLocaleDateString();
+            // Si cambiamos a la pestaña de editar, actualizamos la lista de personas
+            if (tabId === 'edit-persona') {
+                actualizarSelectPersonas();
+            }
+        });
+    });
 }
 
-// Función para convertir string a Date desde un input date
-function parseInputDate(dateString) {
-    return new Date(dateString);
-}
-
-// Función para cargar la lista de personas en la tabla
-function loadPersonasTable() {
-    const personasList = document.getElementById('personas-list');
+// Función para mostrar las personas en la tabla
+function mostrarPersonas() {
     personasList.innerHTML = '';
     
-    const personas = gestor.obtenerTodas();
+    const personas = gestorPersonas.obtenerTodas();
     
     if (personas.length === 0) {
-        personasList.innerHTML = '<tr><td colspan="7">No hay personas registradas</td></tr>';
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="7" class="empty-message">No hay personas registradas</td>';
+        personasList.appendChild(row);
         return;
     }
     
     personas.forEach(persona => {
         const row = document.createElement('tr');
         
+        // Formatear la fecha para mostrarla
+        const fechaNac = persona.getFechaNacimiento();
+        const fechaFormateada = fechaNac instanceof Date ? 
+            `${fechaNac.getDate()}/${fechaNac.getMonth() + 1}/${fechaNac.getFullYear()}` : 
+            'Fecha inválida';
+        
         row.innerHTML = `
             <td>${persona.getCodigo()}</td>
             <td>${persona.getNombre()}</td>
             <td>${persona.getApellido()}</td>
-            <td>${formatDate(persona.getFechaNacimiento())}</td>
+            <td>${fechaFormateada}</td>
             <td>${persona.getGenero()}</td>
             <td>${persona.getCargo()}</td>
             <td>
-                <button class="edit-btn" data-codigo="${persona.getCodigo()}">Editar</button>
-                <button class="delete-btn" data-codigo="${persona.getCodigo()}">Eliminar</button>
+                <button class="btn-edit" data-codigo="${persona.getCodigo()}">Editar</button>
+                <button class="btn-delete" data-codigo="${persona.getCodigo()}">Eliminar</button>
             </td>
         `;
         
         personasList.appendChild(row);
     });
     
-    // Agregar event listeners a los botones de acción
-    document.querySelectorAll('.edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const codigo = this.getAttribute('data-codigo');
-            loadPersonaForEdit(codigo);
+    // Agregar eventos a los botones de editar y eliminar
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const codigo = btn.getAttribute('data-codigo');
+            cargarPersonaParaEditar(codigo);
             
             // Cambiar a la pestaña de edición
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelector('[data-tab="edit-persona"]').classList.add('active');
-            document.getElementById('edit-persona').classList.add('active');
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === 'edit-persona') {
+                    tab.click();
+                }
+            });
         });
     });
     
-    document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const codigo = this.getAttribute('data-codigo');
-            if (confirm(`¿Está seguro de eliminar la persona con código ${codigo}?`)) {
-                gestor.eliminarPersona(codigo);
-                loadPersonasTable();
-                loadPersonasSelect(); // Actualizar el select de personas
-            }
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const codigo = btn.getAttribute('data-codigo');
+            eliminarPersona(codigo);
         });
     });
 }
 
-// Función para cargar el select de personas en el formulario de edición
-function loadPersonasSelect() {
-    const personaSelect = document.getElementById('persona-select');
+// Función para guardar una nueva persona
+function guardarPersona(event) {
+    event.preventDefault();
+    
+    const codigo = document.getElementById('codigo').value;
+    const nombre = document.getElementById('nombre').value;
+    const apellido = document.getElementById('apellido').value;
+    const fechaNacimiento = new Date(document.getElementById('fechaNacimiento').value);
+    const genero = document.getElementById('genero').value;
+    const cargo = document.getElementById('cargo').value;
+    
+    try {
+        const nuevaPersona = new Persona(codigo, nombre, apellido, fechaNacimiento, genero, cargo);
+        
+        if (gestorPersonas.agregarPersona(nuevaPersona)) {
+            alert('Persona agregada correctamente');
+            personaForm.reset();
+            mostrarPersonas();
+            
+            // Cambiar a la pestaña de ver personas
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === 'view-personas') {
+                    tab.click();
+                }
+            });
+        } else {
+            alert('Error: No se pudo agregar la persona. El código podría estar duplicado.');
+        }
+    } catch (error) {
+        alert(`Error al crear la persona: ${error.message}`);
+    }
+}
+
+// Función para actualizar el select de personas en la pestaña de edición
+function actualizarSelectPersonas() {
     personaSelect.innerHTML = '<option value="">Seleccione una persona...</option>';
     
-    const personas = gestor.obtenerTodas();
+    const personas = gestorPersonas.obtenerTodas();
     
     personas.forEach(persona => {
         const option = document.createElement('option');
@@ -112,143 +144,113 @@ function loadPersonasSelect() {
 }
 
 // Función para cargar los datos de una persona en el formulario de edición
-function loadPersonaForEdit(codigo) {
-    const persona = gestor.buscarPorCodigo(codigo);
+function cargarPersonaParaEditar(codigo) {
+    const persona = gestorPersonas.buscarPorCodigo(codigo);
     
     if (!persona) {
-        alert('Persona no encontrada');
+        alert('No se encontró la persona seleccionada');
         return;
     }
     
+    // Seleccionar la persona en el dropdown
+    personaSelect.value = codigo;
+    
+    // Cargar los datos en el formulario
     document.getElementById('edit-codigo').value = persona.getCodigo();
     document.getElementById('edit-nombre').value = persona.getNombre();
     document.getElementById('edit-apellido').value = persona.getApellido();
     
-    // Formatear la fecha para el input date (YYYY-MM-DD)
+    // Formatear la fecha para el input date
     const fechaNac = persona.getFechaNacimiento();
-    const year = fechaNac.getFullYear();
-    const month = String(fechaNac.getMonth() + 1).padStart(2, '0');
-    const day = String(fechaNac.getDate()).padStart(2, '0');
-    document.getElementById('edit-fechaNacimiento').value = `${year}-${month}-${day}`;
+    const fechaFormateada = fechaNac instanceof Date ? 
+        fechaNac.toISOString().split('T')[0] : '';
+    document.getElementById('edit-fechaNacimiento').value = fechaFormateada;
     
     document.getElementById('edit-genero').value = persona.getGenero();
     document.getElementById('edit-cargo').value = persona.getCargo();
-    
-    // Actualizar el select
-    document.getElementById('persona-select').value = codigo;
 }
 
-// Event Listeners para formularios y botones
-document.addEventListener('DOMContentLoaded', function() {
-    // Cargar datos iniciales
-    loadPersonasTable();
-    loadPersonasSelect();
+// Función para actualizar una persona
+function actualizarPersona(event) {
+    event.preventDefault();
     
-    // Formulario de creación de persona
-    document.getElementById('persona-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const codigo = document.getElementById('codigo').value;
-        const nombre = document.getElementById('nombre').value;
-        const apellido = document.getElementById('apellido').value;
-        const fechaNacimiento = parseInputDate(document.getElementById('fechaNacimiento').value);
-        const genero = document.getElementById('genero').value;
-        const cargo = document.getElementById('cargo').value;
-        
-        // Validar que no exista una persona con el mismo código
-        if (gestor.buscarPorCodigo(codigo)) {
-            alert(`Ya existe una persona con el código ${codigo}`);
-            return;
+    const codigo = document.getElementById('edit-codigo').value;
+    const persona = gestorPersonas.buscarPorCodigo(codigo);
+    
+    if (!persona) {
+        alert('No se encontró la persona seleccionada');
+        return;
+    }
+    
+    persona.setNombre(document.getElementById('edit-nombre').value);
+    persona.setApellido(document.getElementById('edit-apellido').value);
+    persona.setFechaNacimiento(new Date(document.getElementById('edit-fechaNacimiento').value));
+    persona.setGenero(document.getElementById('edit-genero').value);
+    persona.setCargo(document.getElementById('edit-cargo').value);
+    
+    alert('Persona actualizada correctamente');
+    mostrarPersonas();
+    
+    // Cambiar a la pestaña de ver personas
+    tabs.forEach(tab => {
+        if (tab.getAttribute('data-tab') === 'view-personas') {
+            tab.click();
         }
-        
-        // Crear y agregar la persona
-        const nuevaPersona = new Persona(codigo, nombre, apellido, fechaNacimiento, genero, cargo);
-        gestor.agregarPersona(nuevaPersona);
-        
-        // Actualizar la UI
-        loadPersonasTable();
-        loadPersonasSelect();
-        
-        // Limpiar el formulario
-        this.reset();
-        
-        // Cambiar a la pestaña de visualización
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelector('[data-tab="view-personas"]').classList.add('active');
-        document.getElementById('view-personas').classList.add('active');
-        
-        alert('Persona creada exitosamente');
     });
-    
-    // Select de personas para edición
-    document.getElementById('persona-select').addEventListener('change', function() {
-        const codigo = this.value;
-        if (codigo) {
-            loadPersonaForEdit(codigo);
+}
+
+// Función para eliminar una persona
+function eliminarPersona(codigo) {
+    if (confirm('¿Está seguro de que desea eliminar esta persona?')) {
+        if (gestorPersonas.eliminarPersona(codigo)) {
+            alert('Persona eliminada correctamente');
+            mostrarPersonas();
+            actualizarSelectPersonas();
         } else {
-            document.getElementById('edit-persona-form').reset();
+            alert('Error: No se pudo eliminar la persona');
+        }
+    }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Configurar las pestañas
+    setupTabs();
+    
+    // Mostrar la lista inicial de personas (vacía)
+    mostrarPersonas();
+    
+    // Event listener para el formulario de creación
+    personaForm.addEventListener('submit', guardarPersona);
+    
+    // Event listener para el select de personas
+    personaSelect.addEventListener('change', () => {
+        const codigo = personaSelect.value;
+        if (codigo) {
+            cargarPersonaParaEditar(codigo);
+        } else {
+            editPersonaForm.reset();
         }
     });
     
-    // Formulario de edición de persona
-    document.getElementById('edit-persona-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
+    // Event listener para el formulario de edición
+    editPersonaForm.addEventListener('submit', actualizarPersona);
+    
+    // Event listener para el botón de eliminar en el formulario de edición
+    document.getElementById('delete-persona').addEventListener('click', () => {
         const codigo = document.getElementById('edit-codigo').value;
-        const persona = gestor.buscarPorCodigo(codigo);
-        
-        if (!persona) {
-            alert('Persona no encontrada');
-            return;
+        if (codigo) {
+            eliminarPersona(codigo);
         }
-        
-        // Actualizar datos de la persona
-        persona.setNombre(document.getElementById('edit-nombre').value);
-        persona.setApellido(document.getElementById('edit-apellido').value);
-        persona.setFechaNacimiento(parseInputDate(document.getElementById('edit-fechaNacimiento').value));
-        persona.setGenero(document.getElementById('edit-genero').value);
-        persona.setCargo(document.getElementById('edit-cargo').value);
-        
-        // Actualizar la UI
-        loadPersonasTable();
-        loadPersonasSelect();
-        
-        // Cambiar a la pestaña de visualización
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelector('[data-tab="view-personas"]').classList.add('active');
-        document.getElementById('view-personas').classList.add('active');
-        
-        alert('Persona actualizada exitosamente');
     });
     
-    // Botón de eliminar persona
-    document.getElementById('delete-persona').addEventListener('click', function() {
-        const codigo = document.getElementById('edit-codigo').value;
-        
-        if (!codigo) {
-            alert('Seleccione una persona para eliminar');
-            return;
-        }
-        
-        if (confirm(`¿Está seguro de eliminar la persona con código ${codigo}?`)) {
-            gestor.eliminarPersona(codigo);
-            
-            // Actualizar la UI
-            loadPersonasTable();
-            loadPersonasSelect();
-            
-            // Limpiar el formulario
-            document.getElementById('edit-persona-form').reset();
-            
-            // Cambiar a la pestaña de visualización
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelector('[data-tab="view-personas"]').classList.add('active');
-            document.getElementById('view-personas').classList.add('active');
-            
-            alert('Persona eliminada exitosamente');
-        }
-    });
+    // Agregar algunas personas de ejemplo para pruebas
+    const persona1 = new Persona('P001', 'Bryan', 'Ibarra', new Date('1990-05-15'), 'Masculino', 'Desarrollador');
+    const persona2 = new Persona('P002', 'Gustav', 'Hooker', new Date('1985-10-20'), 'Masculino', 'Diseñador');
+    
+    gestorPersonas.agregarPersona(persona1);
+    gestorPersonas.agregarPersona(persona2);
+    
+    // Actualizar la vista
+    mostrarPersonas();
 });
