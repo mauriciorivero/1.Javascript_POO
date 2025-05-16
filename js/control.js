@@ -247,10 +247,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Agregar algunas personas de ejemplo para pruebas
     const persona1 = new Persona('P001', 'Bryan', 'Ibarra', new Date('1990-05-15'), 'Masculino', 'Desarrollador');
     const persona2 = new Persona('P002', 'Gustav', 'Hooker', new Date('1985-10-20'), 'Masculino', 'Diseñador');
+    const persona3 = new Persona('P003', 'Mauricio', 'Rivero', new Date('1984-01-02'), 'Masculino', 'Desarrollador');
+    const persona4 = new Persona('P004', 'Ana', 'Gonzalez', new Date('1992-07-25'), 'Femenino', 'Gerente');
+    
     
     gestorPersonas.agregarPersona(persona1);
     gestorPersonas.agregarPersona(persona2);
+    gestorPersonas.agregarPersona(persona3);
+    gestorPersonas.agregarPersona(persona4);
     
     // Actualizar la vista
     mostrarPersonas();
 });
+
+//crea objetos de la clase proyectos para llenar en lista de proyectos de acuerdo a la clase Proyecto y agrega al atributo array participantes dos instancias de la clase persona
+const proyecto1 = new Proyecto('P001', 'Proyecto Alpha', new Date('2023-01-01'), new Date('2023-12-31'));
+const proyecto2 = new Proyecto('P002', 'Proyecto Beta', new Date('2023-02-01'), new Date('2023-11-30'));
+const proyecto3 = new Proyecto('P003', 'Proyecto Gamma', new Date('2023-03-01'), new Date('2023-10-31'));
+const proyecto4 = new Proyecto('P004', 'Proyecto Delta', new Date('2023-04-01'), new Date('2023-09-30'));
+

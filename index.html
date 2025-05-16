@@ -133,7 +133,136 @@
         
         <section class="section-container">
             <h2>Proyectos</h2>
-            <p>Aquí puedes ver los proyectos</p>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="view-proyectos">Ver Proyectos</div>
+                <div class="tab" data-tab="create-proyecto">Crear Proyecto</div>
+                <div class="tab" data-tab="edit-proyecto">Editar Proyecto</div>
+                <div class="tab" data-tab="manage-participantes">Gestionar Participantes</div>
+            </div>
+            
+            <!-- Ver Proyectos -->
+            <div id="view-proyectos" class="tab-content active">
+                <table id="proyectos-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Participantes</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proyectos-list">
+                        <!-- Aquí se mostrarán los proyectos dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Crear Proyecto -->
+            <div id="create-proyecto" class="tab-content">
+                <form id="proyecto-form">
+                    <div class="form-group">
+                        <label for="proyecto-id">ID:</label>
+                        <input type="text" id="proyecto-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="proyecto-nombre">Nombre:</label>
+                        <input type="text" id="proyecto-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="proyecto-fecha-inicio">Fecha de Inicio:</label>
+                        <input type="date" id="proyecto-fecha-inicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="proyecto-fecha-fin">Fecha de Fin (opcional):</label>
+                        <input type="date" id="proyecto-fecha-fin">
+                    </div>
+                    <div class="action-buttons">
+                        <button type="submit" id="save-proyecto">Guardar</button>
+                        <button type="reset">Limpiar</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Editar Proyecto -->
+            <div id="edit-proyecto" class="tab-content">
+                <div class="form-group">
+                    <label for="proyecto-select">Seleccionar Proyecto:</label>
+                    <select id="proyecto-select">
+                        <option value="">Seleccione un proyecto...</option>
+                        <!-- Opciones generadas dinámicamente -->
+                    </select>
+                </div>
+                <form id="edit-proyecto-form">
+                    <div class="form-group">
+                        <label for="edit-proyecto-id">ID:</label>
+                        <input type="text" id="edit-proyecto-id" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-proyecto-nombre">Nombre:</label>
+                        <input type="text" id="edit-proyecto-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-proyecto-fecha-inicio">Fecha de Inicio:</label>
+                        <input type="date" id="edit-proyecto-fecha-inicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-proyecto-fecha-fin">Fecha de Fin (opcional):</label>
+                        <input type="date" id="edit-proyecto-fecha-fin">
+                    </div>
+                    <div class="action-buttons">
+                        <button type="submit" id="update-proyecto">Actualizar</button>
+                        <button type="button" id="delete-proyecto">Eliminar</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Gestionar Participantes -->
+            <div id="manage-participantes" class="tab-content">
+                <div class="form-group">
+                    <label for="participantes-proyecto-select">Seleccionar Proyecto:</label>
+                    <select id="participantes-proyecto-select">
+                        <option value="">Seleccione un proyecto...</option>
+                        <!-- Opciones generadas dinámicamente -->
+                    </select>
+                </div>
+                <div id="participantes-container" class="hidden">
+                    <h3>Participantes del Proyecto</h3>
+                    <table id="participantes-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Rol</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participantes-list">
+                            <!-- Aquí se mostrarán los participantes dinámicamente -->
+                        </tbody>
+                    </table>
+                    
+                    <h3>Agregar Participante</h3>
+                    <form id="add-participante-form">
+                        <div class="form-group">
+                            <label for="participante-persona-select">Persona:</label>
+                            <select id="participante-persona-select" required>
+                                <option value="">Seleccione una persona...</option>
+                                <!-- Opciones generadas dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="participante-rol">Rol en el Proyecto:</label>
+                            <input type="text" id="participante-rol" required>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="submit" id="add-participante">Agregar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </section>
         
         <section class="section-container">
@@ -149,10 +278,8 @@
     <script src="js/GestorPersonas.js"></script>
     <script src="js/Departamento.js"></script>
     <script src="js/Proyecto.js"></script>
+    <script src="js/GestorProyectos.js"></script>
     <script src="js/control.js"></script>
-    
-    <script>
-        
-    </script>
+    <script src="js/controlProyectos.js"></script>
 </body>
 </html>
